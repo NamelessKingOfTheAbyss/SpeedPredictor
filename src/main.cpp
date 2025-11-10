@@ -1,55 +1,80 @@
+#include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
 
-/* Set the delay between fresh samples */
-/* Default is 100 Hz ( Delay is 10 ms )*/
-uint16_t BNO055_SAMPLERATE_DELAY_MS = 10;
-
-// Check I2C device address and correct line below (by default address is 0x29 or 0x28)
-//                                   id, address
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire);
 
-void setup(void)
-{
+BLECharacteristic *pCharacteristic;
+bool deviceConnected = false;
+uint16_t BNO055_SAMPLERATE_DELAY_MS = 10;
+
+#define SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef0"
+#define CHARACTERISTIC_UUID "12345678-1234-5678-1234-56789abcdef1"
+
+class MyServerCallbacks : public BLEServerCallbacks {
+    void onConnect(BLEServer* pServer) {
+      deviceConnected = true;
+    }
+
+    void onDisconnect(BLEServer* pServer) {
+      deviceConnected = false;
+    }
+};
+
+void setup() {
   Serial.begin(115200);
+  while (!Serial) delay(10);
 
-  while (!Serial) delay(10);  // wait for serial port to open!
-
-  Serial.println("Orientation Sensor Test"); Serial.println("");
-
-  /* Initialise the sensor */
-  if (!bno.begin())
-  {
-    /* There was a problem detecting the BNO055 ... check your connections */
-    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+  if (!bno.begin()) {
+    Serial.println("No BNO055 detected. Check wiring!");
     while (1);
   }
 
-  delay(1000);
+  BLEDevice::init("BNO055_BLE_Sensor");
+  BLEServer *pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks());
 
-  // Display CSV header
-  Serial.println("acceleration.x,acceleration.y,acceleration.z,gyro.x,gyro.y,gyro.z");
+  BLEService *pService = pServer->createService(SERVICE_UUID);
+  pCharacteristic = pService->createCharacteristic(
+                      CHARACTERISTIC_UUID,
+                      BLECharacteristic::PROPERTY_NOTIFY
+                    );
+
+  pCharacteristic->addDescriptor(new BLE2902());
+  pService->start();
+
+  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(SERVICE_UUID);
+  pAdvertising->setScanResponse(true);
+  BLEDevice::startAdvertising();
 }
 
-void loop(void)
-{
-  sensors_event_t angVelocityData, linearAccelData;
-  bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
-  bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
+void loop() {
+  if (deviceConnected) {
+    sensors_event_t angVelocityData, linearAccelData;
+    bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
+    bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
 
-  Serial.print(linearAccelData.acceleration.x);
-  Serial.print(",");
-  Serial.print(linearAccelData.acceleration.y);
-  Serial.print(",");
-  Serial.print(linearAccelData.acceleration.z);
-  Serial.print(",");
-  Serial.print(angVelocityData.gyro.x);
-  Serial.print(",");
-  Serial.print(angVelocityData.gyro.y);
-  Serial.print(",");
-  Serial.println(angVelocityData.gyro.z);
+    char data[100];
+    snprintf(data, sizeof(data), "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f",
+             linearAccelData.acceleration.x,
+             linearAccelData.acceleration.y,
+             linearAccelData.acceleration.z,
+             angVelocityData.gyro.x,
+             angVelocityData.gyro.y,
+             angVelocityData.gyro.z);
 
-  delay(BNO055_SAMPLERATE_DELAY_MS);
+    pCharacteristic->setValue((uint8_t*)data, strlen(data));
+    pCharacteristic->notify();
+    
+    delay(BNO055_SAMPLERATE_DELAY_MS);
+  } else {
+    delay(100);
+  }
 }
