@@ -22,29 +22,46 @@ os.makedirs(OUTPUT_SAVED_FOLDER, exist_ok=True)
 # ===================================================
 # Calculate dominant frequency.
 # Returns specified DomFreq.
-# Signal :
-# fps :
 # ===================================================
-def GetDominantFrequency(signal, fps):
+def GetDominantFrequency(signal, fps, min_freq=0.5):
 
     N = len(signal)
 
-    # DC成分除去
+    # DC and trend removal
     signal_centered = signal - np.mean(signal)
 
+    # Hann window
+    window = np.hanning(N)
+    signal_win = signal_centered * window
+
+    # Zero padding for frequency resolution
+    N_fft = 4096
+    if N < N_fft:
+        padded = np.zeros(N_fft)
+        padded[:N] = signal_win
+    else:
+        padded = signal_win  # fallback
+
     # FFT
-    fft_vals = fft(signal_centered)
-    freqs = fftfreq(N, d=1.0/fps)
+    fft_vals = fft(padded)
+    freqs = fftfreq(len(padded), d=1.0 / fps)
 
-    # 正の周波数のみ
+    # Take only positive frequencies
     mask = freqs > 0
-    fft_positive = fft_vals[mask]
-    freqs_positive = freqs[mask]
+    freqs_pos = freqs[mask]
+    fft_pos = np.abs(fft_vals[mask])
 
-    # 主周波数
-    DomFreq = freqs_positive[np.argmax(np.abs(fft_positive))]
+    # Remove low-frequency noise (<0.5Hz)
+    valid = freqs_pos >= min_freq
+    if not valid.any():
+        return 0.0
 
-    return DomFreq
+    fft_pos = fft_pos[valid]
+    freqs_pos = freqs_pos[valid]
+
+    # Dominant frequency
+    peak_idx = np.argmax(fft_pos)
+    return freqs_pos[peak_idx]
 
 
 # ===================================================
@@ -89,11 +106,13 @@ def MakeDatasetPerOneFile(FileName, TargetSpeed):
     print(f"Processing {FileName} (TargetSpeed={TargetSpeed} km/h)...")
 
     RawDataSet = pd.read_csv(FileName)
-    Dataset = []
-    StartIndex = 0
 
     # Just in case, verify that time is sorted in ascending order.
     RawDataSet = RawDataSet.sort_values("time").reset_index(drop=True)
+
+    Dataset = []
+    StartIndex = 0
+
 
     # Dataset Creation
     while True:
