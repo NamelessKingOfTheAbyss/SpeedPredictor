@@ -4,16 +4,16 @@ import os
 from scipy.fft import fft, fftfreq
 from datetime import datetime
 
-timestamp = datetime.now().strftime("%m%d_%H%M")
+TimeStamp = datetime.now().strftime("%m%d_%H%M")
 
 # ------ Change parameters according to the situation ------ #
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 RAW_DATA_SAVED_FOLDER = os.path.join(SCRIPT_DIR, "..", "RawData")
 OUTPUT_SAVED_FOLDER = os.path.join(SCRIPT_DIR, "..", "CreatedDataset")
-OUTPUT_FILE = os.path.join(OUTPUT_SAVED_FOLDER, f"SpeedPredictorDataset_{timestamp}.csv")
+OUTPUT_FILE = os.path.join(OUTPUT_SAVED_FOLDER, f"SpeedPredictorDataset_{TimeStamp}.csv")
 MIN_TARGET_SPEED = 3
 MAX_TARGET_SPEED = 10
-CHUNK_INTERVAL_MS = 3000   # MS : millisecond
+CHUNK_INTERVAL_MS = 4000   # MS : millisecond
 # ---------------------------------------------------------- #
 
 # If the folder does not exist, make it.
@@ -22,13 +22,16 @@ os.makedirs(OUTPUT_SAVED_FOLDER, exist_ok=True)
 # ===================================================
 # Calculate dominant frequency.
 # Returns specified DomFreq.
+# Signal : Time Series Signal Array [time, signal]
+# fps : Sampling frequency
+# MinFreq : Minimum value of low-frequency noise to be ignored
 # ===================================================
-def GetDominantFrequency(signal, fps, min_freq=0.5):
+def GetDominantFrequency(Signal, fps, MinFreq = 0.5):
 
-    N = len(signal)
+    N = len(Signal)
 
     # DC and trend removal
-    signal_centered = signal - np.mean(signal)
+    signal_centered = Signal - np.mean(Signal)
 
     # Hann window
     window = np.hanning(N)
@@ -52,7 +55,7 @@ def GetDominantFrequency(signal, fps, min_freq=0.5):
     fft_pos = np.abs(fft_vals[mask])
 
     # Remove low-frequency noise (<0.5Hz)
-    valid = freqs_pos >= min_freq
+    valid = freqs_pos >= MinFreq
     if not valid.any():
         return 0.0
 
@@ -67,21 +70,21 @@ def GetDominantFrequency(signal, fps, min_freq=0.5):
 # ===================================================
 # Extract features for each chunk.
 # Returns Features {accel_STD, accel_RMS, accel_DomFreq, ang_STD, ang_RMS, ang_DomFreq}.
-# Chunked_Dataset : A dataset divided into specified chunks
+# ChunkedDataset : A dataset divided into specified chunks
 # ===================================================
-def ExtractFeatures(Chunked_Dataset):
+def ExtractFeatures(ChunkedDataset):
 
     Features = {}
 
     # average data acquisition frame rate within the chunk
-    duration_sec = (Chunked_Dataset["time"].iloc[-1] - Chunked_Dataset["time"].iloc[0]) / 1000.0
-    fps = len(Chunked_Dataset) / duration_sec   # (fps = Frame Per Second)
+    duration_sec = (ChunkedDataset["time"].iloc[-1] - ChunkedDataset["time"].iloc[0]) / 1000.0
+    fps = len(ChunkedDataset) / duration_sec   # (fps = Frame Per Second)
 
     # Magnitude of the acceleration vector
-    AccelScalar = np.sqrt(Chunked_Dataset["accel_x"]**2 + Chunked_Dataset["accel_y"]**2 + Chunked_Dataset["accel_z"]**2)
+    AccelScalar = np.sqrt(ChunkedDataset["accel_x"]**2 + ChunkedDataset["accel_y"]**2 + ChunkedDataset["accel_z"]**2)
 
     # Magnitude of the angular velocity vector
-    AngularScalar  = np.sqrt(Chunked_Dataset["gyro_x"]**2  + Chunked_Dataset["gyro_y"]**2  + Chunked_Dataset["gyro_z"]**2)
+    AngularScalar  = np.sqrt(ChunkedDataset["gyro_x"]**2  + ChunkedDataset["gyro_y"]**2  + ChunkedDataset["gyro_z"]**2)
 
     # Acceleration STD, RMS, Dominant Frequency
     Features["accel_STD"]  = AccelScalar.std()
@@ -112,7 +115,6 @@ def MakeDatasetPerOneFile(FileName, TargetSpeed):
 
     Dataset = []
     StartIndex = 0
-
 
     # Dataset Creation
     while True:
@@ -148,17 +150,18 @@ def main():
     AllDataSets = []
 
     for n in range(MIN_TARGET_SPEED, MAX_TARGET_SPEED + 1):
-        Filename = os.path.join(RAW_DATA_SAVED_FOLDER, f"RawData_{n}.csv")
-        if not os.path.exists(Filename):
-            print(f"Warning: {Filename} not found, skipping.")
-            continue
+        for p in range(0,10):
+            Filename = os.path.join(RAW_DATA_SAVED_FOLDER, f"RawData_{n}.{p}.csv")
+            if not os.path.exists(Filename):
+                print(f"Warning: RawData_{n}.{p}.csv not found, skipping.")
+                continue
 
-        Dataset_N = MakeDatasetPerOneFile(Filename, TargetSpeed=n)
-        AllDataSets.append(Dataset_N)
+            Dataset_N = MakeDatasetPerOneFile(Filename, TargetSpeed=n)
+            AllDataSets.append(Dataset_N)
 
     FinalDataFrame = pd.concat(AllDataSets, ignore_index=True)
     FinalDataFrame.to_csv(OUTPUT_FILE, index=False)
-    print(f"\n All datasets saved to {OUTPUT_FILE}")
+    print(f"\n Success! : datasets saved to {OUTPUT_FILE}")
 
 if __name__ == "__main__":
     main()
