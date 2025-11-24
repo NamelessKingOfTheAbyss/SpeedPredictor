@@ -12,59 +12,61 @@ RAW_DATA_SAVED_FOLDER = os.path.join(SCRIPT_DIR, "..", "RawData")
 OUTPUT_SAVED_FOLDER = os.path.join(SCRIPT_DIR, "..", "CreatedDataset")
 OUTPUT_FILE = os.path.join(OUTPUT_SAVED_FOLDER, f"SpeedPredictorDataset_{TimeStamp}.csv")
 MIN_TARGET_SPEED = 4
-MAX_TARGET_SPEED = 6
-CHUNK_INTERVAL_MS = 2000   # MS : millisecond
+MAX_TARGET_SPEED = 10
+CHUNK_INTERVAL_MS = 3000   # MS : millisecond
 # ---------------------------------------------------------- #
 
 # If the folder does not exist, make it.
 os.makedirs(OUTPUT_SAVED_FOLDER, exist_ok=True)
 
 # ===================================================
-# Calculate dominant frequency.
+# Calculate top two dominant frequency.
 # Returns specified DomFreq.
 # Signal : Time Series Signal Array [time, signal]
 # fps : Sampling frequency
 # MinFreq : Minimum value of low-frequency noise to be ignored
 # ===================================================
-def GetDominantFrequency(Signal, fps, MinFreq = 0.5):
+def GetTopFrequencies(Signal, fps, MinFreq = 0.5):
 
     N = len(Signal)
 
-    # DC and trend removal
+    # Remove DC
     signal_centered = Signal - np.mean(Signal)
 
     # Hann window
     window = np.hanning(N)
     signal_win = signal_centered * window
 
-    # Zero padding for frequency resolution
+    # Zero-padding
     N_fft = 4096
-    if N < N_fft:
-        padded = np.zeros(N_fft)
-        padded[:N] = signal_win
-    else:
-        padded = signal_win  # fallback
+    padded = np.zeros(N_fft)
+    padded[:N] = signal_win
 
     # FFT
     fft_vals = fft(padded)
     freqs = fftfreq(len(padded), d=1.0 / fps)
 
-    # Take only positive frequencies
+    # Positive frequencies only
     mask = freqs > 0
     freqs_pos = freqs[mask]
     fft_pos = np.abs(fft_vals[mask])
 
-    # Remove low-frequency noise (<0.5Hz)
+    # Remove low frequency noise
     valid = freqs_pos >= MinFreq
-    if not valid.any():
-        return 0.0
-
-    fft_pos = fft_pos[valid]
     freqs_pos = freqs_pos[valid]
+    fft_pos = fft_pos[valid]
 
-    # Dominant frequency
-    peak_idx = np.argmax(fft_pos)
-    return freqs_pos[peak_idx]
+    if len(fft_pos) == 0:
+        return 0.0, 0.0
+
+    # Sort indices by amplitude (descending)
+    top_idx = np.argsort(fft_pos)[::-1]
+
+    # 1st & 2nd dominant frequencies
+    Freq1 = freqs_pos[top_idx[0]] if len(top_idx) > 0 else 0.0
+    Freq2 = freqs_pos[top_idx[1]] if len(top_idx) > 1 else 0.0
+
+    return Freq1, Freq2
 
 
 # ===================================================
@@ -89,12 +91,16 @@ def ExtractFeatures(ChunkedDataset):
     # Acceleration STD, RMS, Dominant Frequency
     Features["accel_STD"]  = AccelScalar.std()
     Features["accel_RMS"]  = np.sqrt(np.mean(AccelScalar**2))
-    Features["accel_DomFreq"] = GetDominantFrequency(AccelScalar, fps)
+    accel_domfreq1, accel_domfreq2 = GetTopFrequencies(AccelScalar, fps)
+    Features["accel_DomFreq1"] = accel_domfreq1
+    Features["accel_DomFreq2"] = accel_domfreq2
 
     # Angular STD, RMS, Dominant Frequency
     Features["ang_STD"]  = AngularScalar.std()
     Features["ang_RMS"]  = np.sqrt(np.mean(AngularScalar**2))
-    Features["ang_DomFreq"] = GetDominantFrequency(AngularScalar, fps)
+    ang_domfreq1, ang_domfreq2 = GetTopFrequencies(AngularScalar, fps)
+    Features["ang_DomFreq1"] = ang_domfreq1
+    Features["ang_DomFreq2"] = ang_domfreq2
 
     return Features
 

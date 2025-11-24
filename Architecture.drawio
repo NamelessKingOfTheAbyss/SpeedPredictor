@@ -1,31 +1,59 @@
 <mxfile host="65bd71144e">
     <diagram id="1xatdEhUYula1Snlu6QC" name="Page-1">
-        <mxGraphModel dx="320" dy="230" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="568" dy="419" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="4" style="edgeStyle=none;html=1;" edge="1" parent="1" source="2" target="3">
+                <mxCell id="4" style="edgeStyle=none;html=1;" parent="1" source="2" target="3" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="2" value="IMU Sensor" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="2" value="IMU Sensor" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="10" y="160" width="120" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="3" value="MicroController&lt;br&gt;(Arduino)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="3" value="MicroController" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="170" y="160" width="120" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="5" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="7" target="3">
+                <mxCell id="5" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="7" target="3" edge="1">
                     <mxGeometry width="50" height="50" relative="1" as="geometry">
                         <mxPoint x="230" y="270" as="sourcePoint"/>
                         <mxPoint x="230" y="240" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="6" value="Bluetooth" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#3399FF;fontSize=15;" vertex="1" connectable="0" parent="5">
+                <mxCell id="6" value="Bluetooth" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#3399FF;fontSize=15;" parent="5" vertex="1" connectable="0">
                     <mxGeometry x="-0.0125" y="-1" relative="1" as="geometry">
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="7" value="PC (Python)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-                    <mxGeometry x="170" y="280" width="120" height="60" as="geometry"/>
+                <mxCell id="10" value="" style="swimlane;startSize=0;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="270" width="365" height="300" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;Get data and save CSV&lt;/font&gt;" style="edgeStyle=none;html=1;" edge="1" parent="10" source="7" target="11">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="Personal Computer" style="rounded=0;whiteSpace=wrap;html=1;" parent="10" vertex="1">
+                    <mxGeometry x="30" y="30" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="RawData.csv" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="10">
+                    <mxGeometry x="30" y="140" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="" style="edgeStyle=none;html=1;" edge="1" parent="10" source="14" target="15">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="Feature Amount" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="10">
+                    <mxGeometry x="230" y="20" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="" style="curved=1;endArrow=classic;html=1;" edge="1" parent="10" source="11" target="14">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="190" y="110" as="sourcePoint"/>
+                        <mxPoint x="250" y="60" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="200" y="130"/>
+                            <mxPoint x="190" y="60"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="15" value="Predict TargetSpeed" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="10">
+                    <mxGeometry x="230" y="160" width="120" height="60" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
