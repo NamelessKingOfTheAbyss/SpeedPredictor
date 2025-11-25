@@ -11,7 +11,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 RAW_DATA_SAVED_FOLDER = os.path.join(SCRIPT_DIR, "..", "RawData")
 OUTPUT_SAVED_FOLDER = os.path.join(SCRIPT_DIR, "..", "CreatedDataset")
 OUTPUT_FILE = os.path.join(OUTPUT_SAVED_FOLDER, f"SpeedPredictorDataset_{TimeStamp}.csv")
-MIN_TARGET_SPEED = 4
+MIN_TARGET_SPEED = 3
 MAX_TARGET_SPEED = 10
 CHUNK_INTERVAL_MS = 3000   # MS : millisecond
 # ---------------------------------------------------------- #
