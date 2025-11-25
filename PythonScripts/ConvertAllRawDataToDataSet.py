@@ -71,7 +71,7 @@ def GetTopFrequencies(Signal, fps, MinFreq = 0.5):
 
 # ===================================================
 # Extract features for each chunk.
-# Returns Features {accel_STD, accel_RMS, accel_DomFreq, ang_STD, ang_RMS, ang_DomFreq}.
+# Returns Features.
 # ChunkedDataset : A dataset divided into specified chunks
 # ===================================================
 def ExtractFeatures(ChunkedDataset):
@@ -106,7 +106,7 @@ def ExtractFeatures(ChunkedDataset):
 
 # ===================================================
 # Create a dataset for a single RawData file.
-# Returns a dataset {accel_STD, accel_RMS, accel_DomFreq, ang_STD, ang_RMS, ang_DomFreq, TargetSpeed} for the specified correct labels.
+# Returns a dataset for the specified correct labels.
 # FileName : Raw data file to be converted into a dataset
 # TargetSpeed : Correct answer label
 # ===================================================
