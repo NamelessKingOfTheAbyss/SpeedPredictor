@@ -14,7 +14,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_SAVED_FOLDER = os.path.join(SCRIPT_DIR, "..", "CreatedDataset")
 
 # ------ Customize Parameters ------
-DATASET_FILE_NAME = "SpeedPredictorDataset_1124_2339.csv"
+DATASET_FILE_NAME = "SpeedPredictorDataset_1234_5678.csv" # Set Dataset !
 bDisplayErrorDistribution_LR = False
 bDisplayErrorDistribution_SVR = False
 bDisplayErrorDistribution_XGB = False
@@ -51,11 +51,11 @@ def GetPred_XGBoost(X_Train, Y_Train, X_Test):
 
 # ------ Evaluation ------
 def GetEvaluation(y_true, y_pred):
+    me   = np.mean(y_pred - y_true)
     mae  = mean_absolute_error(y_true, y_pred)
     rmse = np.sqrt(mean_squared_error(y_true, y_pred))
     r2   = r2_score(y_true, y_pred)
-    me   = np.mean(y_pred - y_true)
-    return round(mae, 2), round(rmse, 2), round(r2, 2), round(me, 2)
+    return round(me, 2), round(mae, 2), round(rmse, 2), round(r2, 2)
 
 def PlotErrorDistribution(y_true, y_pred, model_name):
     residuals = y_pred - y_true
@@ -121,14 +121,14 @@ def main():
     PredictedVals_Ensemble = (PredictedVals_LR + PredictedVals_SVR + PredictedVals_XGB) / 3.0
 
     print("===== Regression Evaluation =====")
-    mae, rmse, r2, me = GetEvaluation(Y_Test, PredictedVals_LR)
-    print(f"LinearRegression | (MAE, RMSE, R2, ME) = ({mae}, {rmse}, {r2}, {me})")
-    mae, rmse, r2, me = GetEvaluation(Y_Test, PredictedVals_SVR)
-    print(f"SVR              | (MAE, RMSE, R2, ME) = ({mae}, {rmse}, {r2}, {me})")
-    mae, rmse, r2, me = GetEvaluation(Y_Test, PredictedVals_XGB)
-    print(f"XGBoost          | (MAE, RMSE, R2, ME) = ({mae}, {rmse}, {r2}, {me})")
-    mae, rmse, r2, me = GetEvaluation(Y_Test, PredictedVals_Ensemble)
-    print(f"Ensemble         | (MAE, RMSE, R2, ME) = ({mae}, {rmse}, {r2}, {me})")
+    me, mae, rmse, r2 = GetEvaluation(Y_Test, PredictedVals_LR)
+    print(f"LinearRegression | (me, mae, rmse, r2) = ({me}, {mae}, {rmse}, {r2})")
+    me, mae, rmse, r2 = GetEvaluation(Y_Test, PredictedVals_SVR)
+    print(f"SVR              | (me, mae, rmse, r2) = ({me}, {mae}, {rmse}, {r2})")
+    me, mae, rmse, r2 = GetEvaluation(Y_Test, PredictedVals_XGB)
+    print(f"XGBoost          | (me, mae, rmse, r2) = ({me}, {mae}, {rmse}, {r2})")
+    me, mae, rmse, r2 = GetEvaluation(Y_Test, PredictedVals_Ensemble)
+    print(f"Ensemble         | (me, mae, rmse, r2) = ({me}, {mae}, {rmse}, {r2})")
 
     # Error Distribution
     if bDisplayErrorDistribution_LR:
